@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Explorez la répartition d'un lexique français, la longueur des mots et une carte de cercles zoomable."
+    />
+    <meta name="theme-color" content="#f6f5f1" />
+    <title>Lexique — atlas des mots</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="#top" aria-label="Lexique, accueil">
+          <span class="brand-mark" aria-hidden="true">L</span>
+          <span class="brand-name">lexique<span class="brand-slash"> / </span><span class="brand-subtitle">atlas des mots</span></span>
+        </a>
+
+        <div class="topbar-actions">
+          <div class="source-indicator">
+            <span class="source-dot" aria-hidden="true"></span>
+            <span id="source-label">Jeu de démonstration</span>
+          </div>
+          <button
+            class="button button-dark"
+            id="import-toggle"
+            type="button"
+            aria-controls="import-panel"
+            aria-expanded="false"
+          >
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M10 13V3m0 0L6.5 6.5M10 3l3.5 3.5M4 12.5v3A1.5 1.5 0 0 0 5.5 17h9a1.5 1.5 0 0 0 1.5-1.5v-3" />
+            </svg>
+            Importer un lexique
+          </button>
+        </div>
+      </header>
+
+      <main id="top">
+        <section class="hero" aria-labelledby="page-title">
+          <div class="hero-copy">
+            <p class="eyebrow"><span class="eyebrow-line"></span>Observatoire lexical · français</p>
+            <h1 id="page-title">Les mots ont<br /><em>leur territoire.</em></h1>
+            <p class="hero-description">
+              Une autre façon de parcourir le dictionnaire : chaque lettre révèle la densité
+              de son petit monde.
+            </p>
+          </div>
+          <div class="hero-aside" aria-label="À propos de cette visualisation">
+            <span class="hero-aside-number">26</span>
+            <span class="hero-aside-label">lettres<br />à explorer</span>
+            <span class="hero-aside-spark" aria-hidden="true">✳</span>
+          </div>
+        </section>
+
+        <section class="stats-grid" aria-label="Indicateurs du lexique">
+          <article class="stat-card stat-card-total">
+            <p class="stat-label">Mots indexés</p>
+            <div class="stat-value-row">
+              <strong class="stat-value" id="total-count">—</strong>
+              <span class="stat-symbol" aria-hidden="true">↗</span>
+            </div>
+            <p class="stat-note">entrées dans ce lexique</p>
+          </article>
+          <article class="stat-card">
+            <p class="stat-label">Lettres représentées</p>
+            <div class="stat-value-row">
+              <strong class="stat-value"><span id="letter-count">—</span><span class="stat-denominator"> / 26</span></strong>
+              <span class="stat-symbol stat-symbol-lilac" aria-hidden="true">✳</span>
+            </div>
+            <p class="stat-note">avec au moins une entrée</p>
+          </article>
+          <article class="stat-card stat-card-top">
+            <p class="stat-label">Lettre(s) la plus fournie(s)</p>
+            <div class="stat-value-row">
+              <strong class="stat-value stat-value-letters" id="top-letters">—</strong>
+              <span class="stat-symbol stat-symbol-orange" aria-hidden="true">★</span>
+            </div>
+            <p class="stat-note" id="top-count">—</p>
+          </article>
+        </section>
+
+        <section class="import-panel" id="import-panel" aria-labelledby="import-title" hidden>
+          <div class="import-panel-heading">
+            <div>
+              <p class="eyebrow">Votre propre collection</p>
+              <h2 id="import-title">Importer un lexique</h2>
+            </div>
+            <button class="icon-button" id="close-import" type="button" aria-label="Fermer le panneau d'import">×</button>
+          </div>
+          <p class="import-description">
+            Collez une liste ou choisissez un fichier texte/CSV. Les mots peuvent être séparés
+            par des retours à la ligne, des espaces, des virgules ou des points-virgules.
+          </p>
+          <label class="visually-hidden" for="lexicon-input">Liste de mots à analyser</label>
+          <textarea
+            id="lexicon-input"
+            rows="4"
+            spellcheck="false"
+            placeholder="abeille&#10;abricot&#10;aventure&#10;..."
+          ></textarea>
+          <div class="import-actions">
+            <label class="button button-light file-button" for="file-input">
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M10 13V3m0 0L6.5 6.5M10 3l3.5 3.5M4 12.5v3A1.5 1.5 0 0 0 5.5 17h9a1.5 1.5 0 0 0 1.5-1.5v-3" />
+              </svg>
+              Choisir un fichier
+              <input id="file-input" type="file" accept=".txt,.csv,text/plain,text/csv" />
+            </label>
+            <button class="button button-light reset-button" id="reset-demo" type="button">Revenir à l'exemple</button>
+            <button class="button button-accent" id="analyze-list" type="button">Analyser la liste <span aria-hidden="true">→</span></button>
+          </div>
+          <p class="import-status" id="import-status" aria-live="polite"></p>
+        </section>
+
+        <section class="dashboard-grid" aria-label="Visualisation du dictionnaire">
+          <article class="chart-card">
+            <div class="chart-heading">
+              <div>
+                <p class="eyebrow">01 <span class="eyebrow-divider">/</span> Visualisation</p>
+                <h2>Répartition des entrées</h2>
+                <p class="chart-description">Nombre de mots classés selon leur première lettre.</p>
+              </div>
+              <div class="chart-tools">
+                <label class="search-field">
+                  <svg viewBox="0 0 20 20" aria-hidden="true">
+                    <circle cx="8.8" cy="8.8" r="5.8" />
+                    <path d="m13.2 13.2 4 4" />
+                  </svg>
+                  <span class="visually-hidden">Rechercher dans le lexique</span>
+                  <input id="search-input" type="search" placeholder="Rechercher un mot" autocomplete="off" />
+                  <button class="search-clear" id="clear-search" type="button" aria-label="Effacer la recherche" hidden>×</button>
+                </label>
+                <label class="sort-field">
+                  <span class="visually-hidden">Ordre des lettres</span>
+                  <select id="sort-order" aria-label="Ordre des lettres">
+                    <option value="alphabetical">A → Z</option>
+                    <option value="frequency">Plus fréquentes</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <p class="search-status" id="search-status" role="status" aria-live="polite"></p>
+            <div class="chart-plot">
+              <div class="chart-grid-lines" aria-hidden="true">
+                <span></span><span></span><span></span><span></span>
+              </div>
+              <div class="chart-bars" id="alphabet-chart" role="group" aria-label="Nombre de mots par lettre"></div>
+            </div>
+            <div class="chart-footer">
+              <span><span class="legend-mark" aria-hidden="true"></span>Nombre de mots</span>
+              <span>Cliquez sur une lettre pour explorer ses entrées</span>
+            </div>
+          </article>
+
+          <aside class="side-column">
+            <article class="letter-card" aria-labelledby="selection-title">
+              <div class="letter-card-top">
+                <p class="eyebrow">02 <span class="eyebrow-divider">/</span> Lettre sélectionnée</p>
+                <span class="letter-badge" id="selected-badge">A</span>
+              </div>
+              <h2 id="selection-title">La lettre <span id="selected-letter">A</span></h2>
+              <div class="letter-count-row">
+                <strong id="selected-count">0</strong>
+                <span>mots<br />dans cette lettre</span>
+              </div>
+              <div class="share-line">
+                <span class="share-track"><span id="share-bar"></span></span>
+                <span id="share-label">0 % du lexique</span>
+              </div>
+              <div class="word-list-heading">
+                <span>Quelques entrées</span>
+                <span class="word-list-caption" id="word-list-caption"></span>
+              </div>
+              <ul class="word-list" id="word-list"></ul>
+              <p class="empty-state" id="empty-state" hidden></p>
+              <button class="more-words" id="more-words" type="button" hidden>Afficher plus</button>
+            </article>
+
+            <article class="method-card">
+              <span class="method-icon" aria-hidden="true">i</span>
+              <div>
+                <h3>Comment lire la carte</h3>
+                <p>Les accents sont regroupés avec leur lettre de base. Une même entrée n'est comptée qu'une fois.</p>
+              </div>
+            </article>
+          </aside>
+        </section>
+
+        <section class="insights-grid" aria-label="Statistiques complémentaires">
+          <article class="insight-card length-card" aria-labelledby="length-title">
+            <div class="insight-heading">
+              <div>
+                <p class="eyebrow">03 <span class="eyebrow-divider">/</span> Structure</p>
+                <h2 id="length-title">Des mots courts, des mots longs</h2>
+                <p class="insight-description">Combien de lettres dans chaque entrée ?</p>
+              </div>
+              <div class="average-pill">
+                <strong id="average-length">—</strong>
+                <span>lettres<br />en moyenne</span>
+              </div>
+            </div>
+            <div class="length-chart" id="length-chart" role="img" aria-label="Répartition des mots par longueur"></div>
+            <div class="insight-footer">
+              <span>Longueur calculée sans tirets ni apostrophes.</span>
+              <span id="median-length">Médiane : —</span>
+            </div>
+          </article>
+
+          <article class="insight-card onset-card" aria-labelledby="onset-title">
+            <div class="insight-heading">
+              <div>
+                <p class="eyebrow">04 <span class="eyebrow-divider">/</span> Initiales</p>
+                <h2 id="onset-title">Voyelles ou consonnes ?</h2>
+                <p class="insight-description">La première lettre de chaque mot.</p>
+              </div>
+            </div>
+            <div class="donut-layout">
+              <svg class="onset-donut" viewBox="0 0 200 200" role="img" aria-labelledby="donut-title">
+                <title id="donut-title">Répartition entre initiales voyelles et consonnes</title>
+                <circle class="donut-track" cx="100" cy="100" r="70"></circle>
+                <circle class="donut-segment donut-vowels" id="donut-vowels" cx="100" cy="100" r="70"></circle>
+                <circle class="donut-segment donut-consonants" id="donut-consonants" cx="100" cy="100" r="70"></circle>
+                <text class="donut-total" id="donut-total" x="100" y="96">—</text>
+                <text class="donut-unit" x="100" y="119">mots indexés</text>
+              </svg>
+              <div class="donut-legend">
+                <div class="donut-legend-row">
+                  <span class="legend-dot vowel-dot" aria-hidden="true"></span>
+                  <span class="donut-legend-label">Voyelles<small>A · E · I · O · U · Y</small></span>
+                  <strong id="vowel-summary">—</strong>
+                </div>
+                <div class="donut-legend-row">
+                  <span class="legend-dot consonant-dot" aria-hidden="true"></span>
+                  <span class="donut-legend-label">Consonnes<small>Les autres initiales</small></span>
+                  <strong id="consonant-summary">—</strong>
+                </div>
+              </div>
+            </div>
+          </article>
+
+          <article class="insight-card frequency-card" aria-labelledby="frequency-title">
+            <div class="insight-heading">
+              <div>
+                <p class="eyebrow">05 <span class="eyebrow-divider">/</span> Fréquence</p>
+                <h2 id="frequency-title">Quelles lettres reviennent le plus ?</h2>
+                <p class="insight-description">Occurrences de chaque lettre A–Z dans tous les mots du lexique.</p>
+              </div>
+              <div class="average-pill">
+                <strong id="letter-occurrence-total">—</strong>
+                <span>lettres<br />au total</span>
+              </div>
+            </div>
+            <div class="frequency-chart-viewport">
+              <div
+                class="letter-frequency-chart"
+                id="letter-frequency-chart"
+                role="group"
+                aria-label="Fréquence de chaque lettre dans le lexique"
+              ></div>
+            </div>
+            <div class="insight-footer">
+              <span>Accents regroupés · « œ » = O + E, « æ » = A + E · tirets et apostrophes ignorés.</span>
+              <span id="most-common-letters">Lettres les plus fréquentes : —</span>
+            </div>
+          </article>
+        </section>
+
+        <section class="circle-map-card" aria-labelledby="circle-map-title">
+          <div class="circle-map-header">
+            <div>
+              <p class="eyebrow">06 <span class="eyebrow-divider">/</span> Exploration</p>
+              <h2 id="circle-map-title">La carte des mots</h2>
+              <p class="insight-description">
+                Cliquez de lettre en lettre pour explorer la répartition du lexique.
+              </p>
+            </div>
+            <div class="circle-map-toolbar">
+              <p id="map-status" role="status" aria-live="polite">La taille des cercles suit le nombre d'entrées.</p>
+              <button class="button button-light map-back-button" id="map-back" type="button" hidden>
+                <span aria-hidden="true">←</span>
+                <span id="map-back-label">Toutes les lettres</span>
+              </button>
+            </div>
+          </div>
+          <div class="map-surface">
+            <svg
+              id="circle-map"
+              viewBox="0 0 1000 500"
+              role="group"
+              aria-label="Carte circulaire hiérarchique du lexique. Activez un cercle pour explorer le niveau de lettre suivant."
+            ></svg>
+            <p class="map-empty" id="map-empty" hidden></p>
+          </div>
+          <div class="map-footer">
+            <span>
+              <span class="legend-dot map-legend-dot" aria-hidden="true"></span>
+              <span id="map-legend-label">Un cercle par lettre · surface proportionnelle au nombre de mots.</span>
+            </span>
+            <span id="map-help">Cliquez sur une lettre pour zoomer.</span>
+          </div>
+        </section>
+      </main>
+
+      <footer class="page-footer">
+        <span>LEXIQUE <span class="footer-slash">/</span> ATLAS DES MOTS</span>
+        <span>Une exploration de la langue, lettre après lettre.</span>
+      </footer>
+    </div>
+  </body>
+</html>
